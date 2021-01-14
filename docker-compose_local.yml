@@ -1,8 +1,6 @@
 version: "3.6"
 
 networks:
-  haproxy-public:
-    external: true
   mei-network:
 
 services:
@@ -33,7 +31,6 @@ services:
       - "1234:80"
     networks:
       - mei-network
-      - haproxy-public
     environment:
       - PMA_HOST=mysql
     deploy:
@@ -90,12 +87,11 @@ services:
     logging:
       driver: 'journald'
   bluecloud-webapp:
-    image: fpalermo/bluecloud-webapp
+    image: fpalermo/bluecloud-webapp:local
     ports:
       - "3000:80"
     networks:
       - mei-network
-      - haproxy-public
     depends_on:
       - bluecloud-register
       - bluecloud-webservice
