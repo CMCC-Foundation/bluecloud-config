@@ -1,0 +1,115 @@
+version: "3.6"
+
+networks:
+  haproxy-public:
+    external: true
+  mei-network:
+
+services:
+  mysql-server:
+    image: mysql:5.6
+    ports:
+      - "3306:3306"
+    networks:
+      - mei-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=root
+      - MYSQL_DATABASE=seastat
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "1234:80"
+    networks:
+      - mei-network
+      - haproxy-public
+    environment:
+      - PMA_HOST=mysql
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  bluecloud-register:
+    image: bluecloud-register
+    ports:
+      - "8080:8080"
+    networks:
+      - mei-network
+    depends_on:
+      - mysql-server
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  bluecloud-webservice:
+    image: fpalermo/bluecloud-webservice
+    ports:
+      - "3000:80"
+    networks:
+      - mei-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  bluecloud-webapp:
+    image: fpalermo/bluecloud-webapp
+    ports:
+      - "5000:80"
+    networks:
+      - mei-network
+      - haproxy-public
+    depends_on:
+      - bluecloud-register
+      - bluecloud-webservice
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
