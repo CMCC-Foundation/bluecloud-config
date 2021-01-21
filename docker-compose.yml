@@ -6,15 +6,16 @@ networks:
   mei-network:
 
 services:
-  mysql:
-    image: mysql:5.6
+  mei-mysql:
+    image: anto6715/bluecloud_mysql:latest
     ports:
       - "3306:3306"
     networks:
       - mei-network
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=root
+      - MYSQL_ROOT_PASSWORD=<root_password>
+      - MYSQL_PASSWORD=<password>
+      - MYSQL_USER=mei
       - MYSQL_DATABASE=seastat
     deploy:
       placement:
@@ -27,7 +28,7 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  phpmyadmin:
+  mei-phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
       - "1234:80"
@@ -35,7 +36,7 @@ services:
       - mei-network
       - haproxy-public
     environment:
-      - PMA_HOST=mysql
+      - PMA_HOST=mei-mysql
     deploy:
       placement:
         constraints:
@@ -47,14 +48,14 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-register:
-    image: bluecloud-register
+  mei-register:
+    image: anto6715/bluecloud-register:latest
     ports:
       - "8080:8080"
     networks:
       - mei-network
     depends_on:
-      - mysql
+      - mei-mysql
     deploy:
       mode: replicated
       replicas: 1
@@ -69,8 +70,8 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-webservice:
-    image: fpalermo/bluecloud-webservice
+  mei-webservice:
+    image: fpalermo/bluecloud-webservice:latest
     ports:
       - "5000:80"
     networks:
@@ -89,16 +90,16 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-webapp:
-    image: fpalermo/bluecloud-webapp
+  mei-webapp:
+    image: fpalermo/bluecloud-webapp:latest
     ports:
       - "3000:80"
     networks:
       - mei-network
       - haproxy-public
     depends_on:
-      - bluecloud-register
-      - bluecloud-webservice
+      - mei-register
+      - mei-webservice
     deploy:
       mode: replicated
       replicas: 1
