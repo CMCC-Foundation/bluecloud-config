@@ -46,8 +46,13 @@ services:
       driver: 'journald'
   mei-register:
     image: anto6715/bluecloud-register:latest
+    environment:
+      - MYSQL_PASSWORD={{ cmmc_mysql_password }}
+      - MYSQL_USER=mei
+      - MYSQL_DATABASE=seastat
     networks:
       - mei-network
+      - haproxy-public
     deploy:
       mode: replicated
       replicas: 1
@@ -66,6 +71,7 @@ services:
     image: fpalermo/bluecloud-webservice:latest
     networks:
       - mei-network
+      - haproxy-public
     deploy:
       mode: replicated
       replicas: 1
