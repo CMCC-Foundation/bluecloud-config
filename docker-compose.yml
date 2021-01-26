@@ -47,9 +47,9 @@ services:
   mei-register:
     image: anto6715/bluecloud-register:latest
     environment:
-      - MYSQL_PASSWORD={{ cmmc_mysql_password }}
-      - MYSQL_USER=mei
-      - MYSQL_DATABASE=seastat
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
+      - SPRING_DATASOURCE_USERNAME=mei
+      - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
     networks:
       - mei-network
       - haproxy-public
