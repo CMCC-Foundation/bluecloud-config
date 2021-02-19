@@ -1,18 +1,20 @@
+# Setting your passwords and create you personal db user
 version: "3.6"
 
 networks:
   mei-network:
 
 services:
-  mysql:
-    image: mysql:5.6
-    ports:
-      - "3306:3306"
+  mei-mysql:
+    image: anto6715/bluecloud_mysql:latest
     networks:
       - mei-network
+    ports:
+      - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=root
+      - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
+      - MYSQL_PASSWORD={{ cmmc_mysql_password }}
+      - MYSQL_USER=mei
       - MYSQL_DATABASE=seastat
     deploy:
       placement:
@@ -25,14 +27,14 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  phpmyadmin:
+  mei-phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
       - "1234:80"
     networks:
       - mei-network
     environment:
-      - PMA_HOST=mysql
+      - PMA_HOST=mei-mysql
     deploy:
       placement:
         constraints:
@@ -44,14 +46,18 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-register:
+  mei-register:
     image: bluecloud-register
     ports:
       - "8080:8080"
     networks:
       - mei-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
+      - SPRING_DATASOURCE_USERNAME=mei
+      - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
     depends_on:
-      - mysql
+      - mei-mysql
     deploy:
       mode: replicated
       replicas: 1
@@ -66,12 +72,12 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-webservice:
-    image: fpalermo/bluecloud-webservice
+  mei-webservice:
+    image: fpalermo/bluecloud-webservice:latest
+    networks:
+      - mei-network
     ports:
       - "5000:80"
-    networks:
-      - mei-network
     deploy:
       mode: replicated
       replicas: 1
@@ -86,15 +92,15 @@ services:
         window: 120s
     logging:
       driver: 'journald'
-  bluecloud-webapp:
+  mei-webapp:
     image: fpalermo/bluecloud-webapp:local
+    networks:
+      - mei-network
     ports:
       - "3000:80"
-    networks:
-      - mei-network
     depends_on:
-      - bluecloud-register
-      - bluecloud-webservice
+      - mei-register
+      - mei-webservice
     deploy:
       mode: replicated
       replicas: 1
@@ -109,3 +115,4 @@ services:
         window: 120s
     logging:
       driver: 'journald'
+  
