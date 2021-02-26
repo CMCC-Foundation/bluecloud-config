@@ -47,7 +47,7 @@ services:
     logging:
       driver: 'journald'
   mei-register:
-    image: bluecloud-register
+    image: anto6715/bluecloud-register:latest
     ports:
       - "8080:8080"
     networks:
