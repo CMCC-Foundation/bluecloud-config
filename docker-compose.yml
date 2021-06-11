@@ -5,11 +5,16 @@ networks:
     external: true
   mei-network:
 
+volumes:
+  bc_mei_generator_db_data:
+
 services:
   mei-mysql:
     image: anto6715/bluecloud_mysql:latest
     networks:
       - mei-network
+    volumes:
+      - bc_mei_generator_db_data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
       - MYSQL_PASSWORD={{ cmmc_mysql_password }}
@@ -19,6 +24,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.labels.mei_generator_db_data == bc_mei_generator
       restart_policy:
         condition: on-failure
         delay: 5s
