@@ -1,0 +1,116 @@
+version: "3.6"
+
+networks:
+  haproxy-public:
+    external: true
+  mei-network-dev:
+
+volumes:
+  bc_mei_generator_db_data-dev:
+
+services:
+  mei-mysql:
+    image: mysql:8
+    networks:
+      - mei-network-dev
+    volumes:
+      - bc_mei_generator_db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
+      - MYSQL_PASSWORD={{ cmmc_mysql_password }}
+      - MYSQL_USER=mei
+      - MYSQL_DATABASE=seastat
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+          - node.labels.mei_generator_db_data == bc_mei_generator
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  mei-phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    networks:
+      - mei-network-dev
+      - haproxy-public
+    environment:
+      - PMA_HOST=mei-mysql
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  mei-register:
+    image: anto6715/bluecloud-register:dev
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
+      - SPRING_DATASOURCE_USERNAME=mei
+      - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
+    networks:
+      - mei-network-dev
+      - haproxy-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  mei-webservice:
+    image: fpalermo/bluecloud-webservice:dev
+    networks:
+      - mei-network-dev
+      - haproxy-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
+  mei-webapp:
+    image: fpalermo/bluecloud-webapp:dev
+    networks:
+      - mei-network-dev
+      - haproxy-public
+    depends_on:
+      - mei-register
+      - mei-webservice
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: 'journald'
