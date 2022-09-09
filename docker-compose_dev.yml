@@ -7,6 +7,11 @@ networks:
 
 volumes:
   bc_mei_generator_db_data-dev:
+    driver: local
+    driver_opts:
+    type: nfs4
+    o: "nfsvers=4,addr={{ bluecloud_mei_dev_nfs_server }},rw"
+    device: ":/nfs/bluecloud_mei_dev_mysql"
 
 services:
   mei-mysql:
@@ -14,7 +19,7 @@ services:
     networks:
       - mei-network-dev
     volumes:
-      - bc_mei_generator_db_data:/var/lib/mysql
+      - bc_mei_generator_db_data_dev:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
       - MYSQL_PASSWORD={{ cmmc_mysql_password }}
@@ -24,7 +29,6 @@ services:
       placement:
         constraints:
           - node.role == worker
-          - node.labels.mei_generator_db_data == bc_mei_generator
       restart_policy:
         condition: on-failure
         delay: 5s
