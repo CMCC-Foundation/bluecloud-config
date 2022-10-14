@@ -1,16 +1,25 @@
-# Setting your passwords and create you personal db user
 version: "3.6"
 
 networks:
-  mei-network:
+  haproxy-public:
+    external: true
+  mei-network-dev:
+
+volumes:
+  bc_mei_generator_db_data-dev:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: "nfsvers=4,addr={{ bluecloud_mei_dev_nfs_server }},rw"
+      device: ":/nfs/bluecloud_mei_dev_mysql"
 
 services:
   mei-mysql:
-    image: anto6715/bluecloud_mysql:latest
+    image: mysql:8
     networks:
-      - mei-network
-    ports:
-      - "3306:3306"
+      - mei-network-dev
+    volumes:
+      - bc_mei_generator_db_data-dev:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
       - MYSQL_PASSWORD={{ cmmc_mysql_password }}
@@ -29,10 +38,9 @@ services:
       driver: 'journald'
   mei-phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    ports:
-      - "1234:80"
     networks:
-      - mei-network
+      - mei-network-dev
+      - haproxy-public
     environment:
       - PMA_HOST=mei-mysql
     deploy:
@@ -47,17 +55,14 @@ services:
     logging:
       driver: 'journald'
   mei-register:
-    image: anto6715/bluecloud-register:latest
-    ports:
-      - "8080:8080"
-    networks:
-      - mei-network
+    image: anto6715/bluecloud-register:dev
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
       - SPRING_DATASOURCE_USERNAME=mei
       - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
-    depends_on:
-      - mei-mysql
+    networks:
+      - mei-network-dev
+      - haproxy-public
     deploy:
       mode: replicated
       replicas: 1
@@ -73,11 +78,10 @@ services:
     logging:
       driver: 'journald'
   mei-webservice:
-    image: fpalermo/bluecloud-webservice:latest
+    image: fpalermo/bluecloud-webservice:dev
     networks:
-      - mei-network
-    ports:
-      - "5000:80"
+      - mei-network-dev
+      - haproxy-public
     deploy:
       mode: replicated
       replicas: 1
@@ -93,11 +97,10 @@ services:
     logging:
       driver: 'journald'
   mei-webapp:
-    image: fpalermo/bluecloud-webapp:local
+    image: fpalermo/bluecloud-webapp:dev
     networks:
-      - mei-network
-    ports:
-      - "3000:80"
+      - mei-network-dev
+      - haproxy-public
     depends_on:
       - mei-register
       - mei-webservice

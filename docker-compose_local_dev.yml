@@ -2,18 +2,18 @@
 version: "3.6"
 
 networks:
-  mei-network:
+  mei-network-dev:
 
 services:
   mei-mysql:
-    image: anto6715/bluecloud_mysql:latest
+    image: mysql:8
     networks:
-      - mei-network
+      - mei-network-dev
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD={{ cmmc_mysql_root_password }}
-      - MYSQL_PASSWORD={{ cmmc_mysql_password }}
+      - MYSQL_ROOT_PASSWORD=test
+      - MYSQL_PASSWORD=test
       - MYSQL_USER=mei
       - MYSQL_DATABASE=seastat
     deploy:
@@ -32,7 +32,7 @@ services:
     ports:
       - "1234:80"
     networks:
-      - mei-network
+      - mei-network-dev
     environment:
       - PMA_HOST=mei-mysql
     deploy:
@@ -47,15 +47,15 @@ services:
     logging:
       driver: 'journald'
   mei-register:
-    image: anto6715/bluecloud-register:latest
+    image: anto6715/bluecloud-register:dev
     ports:
       - "8080:8080"
     networks:
-      - mei-network
+      - mei-network-dev
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
       - SPRING_DATASOURCE_USERNAME=mei
-      - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
+      - SPRING_DATASOURCE_PASSWORD=test
     depends_on:
       - mei-mysql
     deploy:
@@ -73,9 +73,9 @@ services:
     logging:
       driver: 'journald'
   mei-webservice:
-    image: fpalermo/bluecloud-webservice:latest
+    image: fpalermo/bluecloud-webservice:dev
     networks:
-      - mei-network
+      - mei-network-dev
     ports:
       - "5000:80"
     deploy:
@@ -93,9 +93,9 @@ services:
     logging:
       driver: 'journald'
   mei-webapp:
-    image: fpalermo/bluecloud-webapp:local
+    image: fpalermo/bluecloud-webapp:dev
     networks:
-      - mei-network
+      - mei-network-dev
     ports:
       - "3000:80"
     depends_on:
@@ -115,3 +115,4 @@ services:
         window: 120s
     logging:
       driver: 'journald'
+  
