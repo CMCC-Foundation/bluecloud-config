@@ -57,7 +57,7 @@ services:
   mei-register:
     image: anto6715/bluecloud-register:dev
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mei-mysql:3306/seastat
+      - SPRING_DATASOURCE_URL={{ bluecloud_mei_dev_db_uri }}
       - SPRING_DATASOURCE_USERNAME=mei
       - SPRING_DATASOURCE_PASSWORD={{ cmmc_mysql_password }}
     networks:
